@@ -1,0 +1,28 @@
+#include "imports/stdlib.fc";
+#include "imports/op-codes.fc";
+#include "imports/utils.fc";
+
+() recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
+    slice cs = in_msg_full.begin_parse();
+    int flags = cs~load_uint(4);
+    if (flags & 1) { ;; ignore all bounced messages
+        return ();
+    }
+    slice sender_address = cs~load_msg_addr();
+
+    int op = in_msg_body~load_uint(32);
+    int query_id = in_msg_body~load_uint(64);
+    if (op == 0xcafebabe) {
+        var dict = in_msg_body~load_dict();
+        in_msg_body.end_parse();
+        int i = -1;
+        int success = false;
+        do {
+            (i, slice msg, success) = dict.idict_get_next?(16, i);
+            if (success) {
+                send_raw_message(msg~load_ref(), 1);
+            }
+        } until (~ success);
+    }
+    return ();  
+}

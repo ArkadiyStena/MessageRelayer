@@ -1,0 +1,10 @@
+() send_excess(slice to_address, int query_id, int value, int sending_mode) impure inline {
+    cell msg = begin_cell()
+                    .store_uint(0x18, 6)
+                    .store_slice(to_address)
+                    .store_coins(value)
+                    .store_uint(op::excesses, 1 + 4 + 4 + 64 + 32 + 1 + 1 + 32)
+                    .store_uint(query_id, 64)
+                    .end_cell();
+    send_raw_message(msg, sending_mode);
+}

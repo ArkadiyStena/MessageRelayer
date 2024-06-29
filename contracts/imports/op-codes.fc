@@ -1,0 +1,2 @@
+const int op::send_messages = 0xcafebabe; 
+const int op::excesses = 0xd53276db;

@@ -1,0 +1,71 @@
+#include "imports/stdlib.fc";
+#include "imports/op-codes.fc";
+#include "imports/utils.fc";
+#include "imports/gas.fc";
+
+
+const int WORKCHAIN = 0;
+
+
+(slice, int) ~load_and_send_msg(slice in_msg_body, int msg_mode) impure inline {
+    cell msg_to_send = in_msg_body~load_ref();
+    int msg_cost = send_message(msg_to_send, msg_mode);
+    slice msg_parsed = msg_to_send.begin_parse();
+    msg_parsed~skip_bits(6 + 267);
+    msg_cost += msg_parsed~load_coins();
+    return (in_msg_body, msg_cost);
+}
+
+
+() recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
+    slice cs = in_msg_full.begin_parse();
+    int flags = cs~load_uint(4);
+    if (flags & 1) { ;; ignore all bounced messages
+        return ();
+    }
+    if (in_msg_body.slice_empty?()) {
+        return ();
+    }
+    
+    slice sender_address = cs~load_msg_addr();
+
+    int op = in_msg_body~load_uint(32);
+    int query_id = in_msg_body~load_uint(64);
+    
+    if (op == 0xcafebabe) {
+        int msg_count = in_msg_body~load_uint(8);
+
+        (int cells, int rest) = divmod(msg_count, 3);
+        if (rest == 0) {
+            cells -= 1;
+            rest = 3;
+        }
+
+        int messages_cost = 0;
+        repeat (cells) {
+            messages_cost += in_msg_body~load_and_send_msg(1);
+            messages_cost += in_msg_body~load_and_send_msg(1);
+            messages_cost += in_msg_body~load_and_send_msg(1);
+            in_msg_body = in_msg_body~load_ref().begin_parse();
+        }
+        repeat (rest) {
+            messages_cost += in_msg_body~load_and_send_msg(1);
+        }
+
+        int gas_before_excess = gas_consumed();
+        int total_fee = get_compute_fee(WORKCHAIN, gas_before_excess + 681) + get_storage_fee(WORKCHAIN, MIN_STORAGE_DURATION, STORAGE_BITS, STORAGE_CELLS);
+        
+        msg_value = msg_value - total_fee - messages_cost;
+        if (msg_value < 0) {
+            throw(37);
+        }
+        elseif (msg_value > MIN_EXCESS) {  ;; min excess = 0.008
+            ;; Тут надо вместо raw_reserve конечно вычислять msg_value - forward_fee, но я не понял как это нормально делается без send_message
+            raw_reserve(total_fee + get_compute_fee(WORKCHAIN, 2049), 0);
+            send_excess(sender_address, query_id, 0, 128);
+        }
+        return ();
+    }
+
+    throw(0xffff);
+}
