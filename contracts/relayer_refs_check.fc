@@ -53,7 +53,7 @@ const int WORKCHAIN = 0;
         }
 
         int gas_before_excess = gas_consumed();
-        int total_fee = get_compute_fee(WORKCHAIN, gas_before_excess + 681) + get_storage_fee(WORKCHAIN, MIN_STORAGE_DURATION, STORAGE_BITS, STORAGE_CELLS);
+        int total_fee = get_compute_fee(WORKCHAIN, gas_before_excess + 619) + storage_fees(); ;; get_storage_fee(WORKCHAIN, MIN_STORAGE_DURATION, STORAGE_BITS, STORAGE_CELLS);
         
         msg_value = msg_value - total_fee - messages_cost;
         if (msg_value < 0) {
@@ -64,6 +64,7 @@ const int WORKCHAIN = 0;
             raw_reserve(total_fee + get_compute_fee(WORKCHAIN, 2049), 0);
             send_excess(sender_address, query_id, 0, 128);
         }
+
         return ();
     }
 

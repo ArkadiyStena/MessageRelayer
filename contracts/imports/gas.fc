@@ -2,9 +2,10 @@ int send_message(cell msg, int mode) impure asm "SENDMSG";
 int gas_consumed() asm "GASCONSUMED";
 int get_compute_fee(int workchain, int gas_used) asm(gas_used workchain) "GETGASFEE";
 int get_storage_fee(int workchain, int seconds, int bits, int cells) asm(cells bits seconds workchain) "GETSTORAGEFEE";
+int storage_fees() asm "STORAGEFEES";
 int get_forward_fee(int is_mc, int bits, int cells) asm(cells bits is_mc) "GETFORWARDFEE";  ;; "GETFORWARDFEESIMPLE";
 
 const int STORAGE_CELLS = 6;
-const int STORAGE_BITS = 2155; ;; 2043 без проверки на пустое сообщение
+const int STORAGE_BITS = 2075; ;; 2043 без проверки на пустое сообщение
 const int MIN_STORAGE_DURATION = 1 * 365 * 24 * 3600;  ;; 1 year
 const int MIN_EXCESS = 8000000;  ;; 0.008

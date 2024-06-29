@@ -55,7 +55,7 @@ describe('RelayerRefsCheck', () => {
                     })
                     tonToSend += msgValue + 0.1;
                 }
-
+                // blockchain.now! += 60 * 60 * 24 * 90;
                 let res = await relayer.sendMessages(user.getSender(), toNano(tonToSend.toFixed(2)), messages);
                 // printTransactionFees(res.transactions);
                 // console.log(Number((await blockchain.getContract(relayer.address)).balance) / 1e9);
